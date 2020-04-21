@@ -6,7 +6,7 @@
 package opentracer_test
 
 import (
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/pm-esd/tracing/opentracer"
 	"github.com/pm-esd/tracing/tracer"

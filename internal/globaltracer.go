@@ -1,4 +1,4 @@
-package internal // import "gopkg.in/DataDog/dd-trace-go.v1/tracing/internal"
+package internal // import "github.com/pm-esd/tracing/internal"
 
 import (
 	"sync"

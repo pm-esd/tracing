@@ -8,8 +8,8 @@ package opentracer
 import (
 	"testing"
 
+	"github.com/pm-esd/tracing"
 	"github.com/pm-esd/tracing/internal"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -17,7 +17,7 @@ import (
 func TestStart(t *testing.T) {
 	assert := assert.New(t)
 	ot := New()
-	dd, ok := internal.GetGlobalTracer().(ddtrace.Tracer)
+	dd, ok := internal.GetGlobalTracer().(tracing.Tracer)
 	assert.True(ok)
 	ott, ok := ot.(*opentracer)
 	assert.True(ok)

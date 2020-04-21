@@ -10,16 +10,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pm-esd/tracing"
 	"github.com/pm-esd/tracing/ext"
 	"github.com/pm-esd/tracing/tracer"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 
 	"github.com/stretchr/testify/assert"
 )
 
 // basicSpan returns a span with no configuration, having the set operation name.
 func basicSpan(operationName string) *mockspan {
-	return newSpan(&mocktracer{}, operationName, &ddtrace.StartSpanConfig{})
+	return newSpan(&mocktracer{}, operationName, &tracing.StartSpanConfig{})
 }
 
 func TestNewSpan(t *testing.T) {
@@ -39,7 +39,7 @@ func TestNewSpan(t *testing.T) {
 		tr := new(mocktracer)
 		startTime := time.Now()
 		tags := map[string]interface{}{"k": "v", "k1": "v1"}
-		opts := &ddtrace.StartSpanConfig{
+		opts := &tracing.StartSpanConfig{
 			StartTime: startTime,
 			Tags:      tags,
 		}
@@ -55,7 +55,7 @@ func TestNewSpan(t *testing.T) {
 	t.Run("parent", func(t *testing.T) {
 		baggage := map[string]string{"A": "B", "C": "D"}
 		parentctx := &spanContext{spanID: 1, traceID: 2, baggage: baggage}
-		opts := &ddtrace.StartSpanConfig{Parent: parentctx}
+		opts := &tracing.StartSpanConfig{Parent: parentctx}
 		s := newSpan(&mocktracer{}, "http.request", opts)
 
 		assert := assert.New(t)
@@ -101,7 +101,7 @@ func TestSpanTagImmutability(t *testing.T) {
 
 func TestSpanStartTime(t *testing.T) {
 	startTime := time.Now()
-	s := newSpan(&mocktracer{}, "http.request", &ddtrace.StartSpanConfig{StartTime: startTime})
+	s := newSpan(&mocktracer{}, "http.request", &tracing.StartSpanConfig{StartTime: startTime})
 
 	assert := assert.New(t)
 	assert.Equal(startTime, s.startTime)
@@ -155,7 +155,7 @@ func TestSpanContext(t *testing.T) {
 
 	t.Run("IDs", func(t *testing.T) {
 		parent := basicSpan("http.request")
-		child := newSpan(&mocktracer{}, "db.query", &ddtrace.StartSpanConfig{
+		child := newSpan(&mocktracer{}, "db.query", &tracing.StartSpanConfig{
 			Parent: parent.Context(),
 		})
 

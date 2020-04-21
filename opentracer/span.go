@@ -8,9 +8,9 @@ package opentracer
 import (
 	"fmt"
 
+	"github.com/pm-esd/tracing"
 	"github.com/pm-esd/tracing/ext"
 	"github.com/pm-esd/tracing/tracer"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
@@ -18,9 +18,9 @@ import (
 
 var _ opentracing.Span = (*span)(nil)
 
-// span implements opentracing.Span on top of ddtrace.Span.
+// span implements opentracing.Span on top of tracing.Span.
 type span struct {
-	ddtrace.Span
+	tracing.Span
 	*opentracer
 }
 

@@ -20,9 +20,9 @@
 package opentracer
 
 import (
+	"github.com/pm-esd/tracing"
 	"github.com/pm-esd/tracing/internal"
 	"github.com/pm-esd/tracing/tracer"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 
 	"github.com/opentracing/opentracing-go"
 )
@@ -36,8 +36,8 @@ func New(opts ...tracer.StartOption) opentracing.Tracer {
 
 var _ opentracing.Tracer = (*opentracer)(nil)
 
-// opentracer implements opentracing.Tracer on top of ddtrace.Tracer.
-type opentracer struct{ ddtrace.Tracer }
+// opentracer implements opentracing.Tracer on top of tracing.Tracer.
+type opentracer struct{ tracing.Tracer }
 
 // StartSpan implements opentracing.Tracer.
 func (t *opentracer) StartSpan(operationName string, options ...opentracing.StartSpanOption) opentracing.Span {
@@ -45,9 +45,9 @@ func (t *opentracer) StartSpan(operationName string, options ...opentracing.Star
 	for _, o := range options {
 		o.Apply(&sso)
 	}
-	opts := []ddtrace.StartSpanOption{tracer.StartTime(sso.StartTime)}
+	opts := []tracing.StartSpanOption{tracer.StartTime(sso.StartTime)}
 	for _, ref := range sso.References {
-		if v, ok := ref.ReferencedContext.(ddtrace.SpanContext); ok && ref.Type == opentracing.ChildOfRef {
+		if v, ok := ref.ReferencedContext.(tracing.SpanContext); ok && ref.Type == opentracing.ChildOfRef {
 			opts = append(opts, tracer.ChildOf(v))
 			break // can only have one parent
 		}
@@ -63,7 +63,7 @@ func (t *opentracer) StartSpan(operationName string, options ...opentracing.Star
 
 // Inject implements opentracing.Tracer.
 func (t *opentracer) Inject(ctx opentracing.SpanContext, format interface{}, carrier interface{}) error {
-	sctx, ok := ctx.(ddtrace.SpanContext)
+	sctx, ok := ctx.(tracing.SpanContext)
 	if !ok {
 		return opentracing.ErrUnsupportedFormat
 	}

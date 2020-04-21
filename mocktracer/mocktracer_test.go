@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pm-esd/tracing"
 	"github.com/pm-esd/tracing/ext"
 	"github.com/pm-esd/tracing/internal"
 	"github.com/pm-esd/tracing/tracer"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -37,7 +37,7 @@ func TestTracerStartSpan(t *testing.T) {
 
 	t.Run("with-service", func(t *testing.T) {
 		var mt mocktracer
-		parent := newSpan(&mt, "http.request", &ddtrace.StartSpanConfig{Tags: parentTags})
+		parent := newSpan(&mt, "http.request", &tracing.StartSpanConfig{Tags: parentTags})
 		s, ok := mt.StartSpan(
 			"db.query",
 			tracer.ServiceName("my-service"),
@@ -58,7 +58,7 @@ func TestTracerStartSpan(t *testing.T) {
 
 	t.Run("inherit", func(t *testing.T) {
 		var mt mocktracer
-		parent := newSpan(&mt, "http.request", &ddtrace.StartSpanConfig{Tags: parentTags})
+		parent := newSpan(&mt, "http.request", &tracing.StartSpanConfig{Tags: parentTags})
 		s, ok := mt.StartSpan("db.query", tracer.ChildOf(parent.Context())).(*mockspan)
 
 		assert := assert.New(t)
@@ -74,7 +74,7 @@ func TestTracerStartSpan(t *testing.T) {
 
 func TestTracerFinishedSpans(t *testing.T) {
 	var mt mocktracer
-	parent := newSpan(&mt, "http.request", &ddtrace.StartSpanConfig{})
+	parent := newSpan(&mt, "http.request", &tracing.StartSpanConfig{})
 	child := mt.StartSpan("db.query", tracer.ChildOf(parent.Context()))
 	child.Finish()
 	parent.Finish()

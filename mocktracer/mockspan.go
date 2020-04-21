@@ -10,11 +10,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pm-esd/tracing"
 	"github.com/pm-esd/tracing/ext"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 )
 
-var _ ddtrace.Span = (*mockspan)(nil)
+var _ tracing.Span = (*mockspan)(nil)
 var _ Span = (*mockspan)(nil)
 
 // Span is an interface that allows querying a span returned by the mock tracer.
@@ -44,13 +44,13 @@ type Span interface {
 	Tags() map[string]interface{}
 
 	// Context returns the span's SpanContext.
-	Context() ddtrace.SpanContext
+	Context() tracing.SpanContext
 
 	// Stringer allows pretty-printing the span's fields for debugging.
 	fmt.Stringer
 }
 
-func newSpan(t *mocktracer, operationName string, cfg *ddtrace.StartSpanConfig) *mockspan {
+func newSpan(t *mocktracer, operationName string, cfg *tracing.StartSpanConfig) *mockspan {
 	if cfg.Tags == nil {
 		cfg.Tags = make(map[string]interface{})
 	}
@@ -187,8 +187,8 @@ func (s *mockspan) SetBaggageItem(key, val string) {
 }
 
 // Finish finishes the current span with the given options.
-func (s *mockspan) Finish(opts ...ddtrace.FinishOption) {
-	var cfg ddtrace.FinishConfig
+func (s *mockspan) Finish(opts ...tracing.FinishOption) {
+	var cfg tracing.FinishConfig
 	for _, fn := range opts {
 		fn(&cfg)
 	}
@@ -230,4 +230,4 @@ baggage: %#v
 }
 
 // Context returns the SpanContext of this Span.
-func (s *mockspan) Context() ddtrace.SpanContext { return s.context }
+func (s *mockspan) Context() tracing.SpanContext { return s.context }

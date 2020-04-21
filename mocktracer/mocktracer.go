@@ -17,12 +17,12 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/pm-esd/tracing"
 	"github.com/pm-esd/tracing/internal"
 	"github.com/pm-esd/tracing/tracer"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 )
 
-var _ ddtrace.Tracer = (*mocktracer)(nil)
+var _ tracing.Tracer = (*mocktracer)(nil)
 var _ Tracer = (*mocktracer)(nil)
 
 // Tracer exposes an interface for querying the currently running mock tracer.
@@ -62,8 +62,8 @@ func (*mocktracer) Stop() {
 	internal.Testing = false
 }
 
-func (t *mocktracer) StartSpan(operationName string, opts ...ddtrace.StartSpanOption) ddtrace.Span {
-	var cfg ddtrace.StartSpanConfig
+func (t *mocktracer) StartSpan(operationName string, opts ...tracing.StartSpanOption) tracing.Span {
+	var cfg tracing.StartSpanConfig
 	for _, fn := range opts {
 		fn(&cfg)
 	}
@@ -98,7 +98,7 @@ const (
 	baggagePrefix  = tracer.DefaultBaggageHeaderPrefix
 )
 
-func (t *mocktracer) Extract(carrier interface{}) (ddtrace.SpanContext, error) {
+func (t *mocktracer) Extract(carrier interface{}) (tracing.SpanContext, error) {
 	reader, ok := carrier.(tracer.TextMapReader)
 	if !ok {
 		return nil, tracer.ErrInvalidCarrier
@@ -142,7 +142,7 @@ func (t *mocktracer) Extract(carrier interface{}) (ddtrace.SpanContext, error) {
 	return &sc, err
 }
 
-func (t *mocktracer) Inject(context ddtrace.SpanContext, carrier interface{}) error {
+func (t *mocktracer) Inject(context tracing.SpanContext, carrier interface{}) error {
 	writer, ok := carrier.(tracer.TextMapWriter)
 	if !ok {
 		return tracer.ErrInvalidCarrier

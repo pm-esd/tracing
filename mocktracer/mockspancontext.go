@@ -9,10 +9,10 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
+	"github.com/pm-esd/tracing"
 )
 
-var _ ddtrace.SpanContext = (*spanContext)(nil)
+var _ tracing.SpanContext = (*spanContext)(nil)
 
 type spanContext struct {
 	sync.RWMutex // guards below fields
