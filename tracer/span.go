@@ -17,8 +17,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pm-esd/tracing"
 	"github.com/pm-esd/tracing/ext"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 
 	"github.com/tinylib/msgp/msgp"
 	"golang.org/x/xerrors"
@@ -34,7 +34,7 @@ type (
 )
 
 var (
-	_ ddtrace.Span   = (*span)(nil)
+	_ tracing.Span   = (*span)(nil)
 	_ msgp.Encodable = (*spanList)(nil)
 	_ msgp.Decodable = (*spanLists)(nil)
 )
@@ -72,7 +72,7 @@ type span struct {
 // Context yields the SpanContext for this Span. Note that the return
 // value of Context() is still valid after a call to Finish(). This is
 // called the span context and it is different from Go's context.
-func (s *span) Context() ddtrace.SpanContext { return s.context }
+func (s *span) Context() tracing.SpanContext { return s.context }
 
 // SetBaggageItem sets a key/value pair as baggage on the span. Baggage items
 // are propagated down to descendant spans and injected cross-process. Use with
@@ -254,10 +254,10 @@ func (s *span) setMetric(key string, v float64) {
 
 // Finish closes this Span (but not its children) providing the duration
 // of its part of the tracing session.
-func (s *span) Finish(opts ...ddtrace.FinishOption) {
+func (s *span) Finish(opts ...tracing.FinishOption) {
 	t := now()
 	if len(opts) > 0 {
-		var cfg ddtrace.FinishConfig
+		var cfg tracing.FinishConfig
 		for _, fn := range opts {
 			fn(&cfg)
 		}

@@ -15,9 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pm-esd/tracing"
 	"github.com/pm-esd/tracing/ext"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
-	"gopkg.in/DataDog/dd-trace-go.v1/internal/log"
 
 	"golang.org/x/time/rate"
 )
@@ -73,7 +72,7 @@ func (r *rateSampler) SetRate(rate float64) {
 const knuthFactor = uint64(1111111111111111111)
 
 // Sample returns true if the given span should be sampled.
-func (r *rateSampler) Sample(spn ddtrace.Span) bool {
+func (r *rateSampler) Sample(spn tracing.Span) bool {
 	if r.rate == 1 {
 		// fast path
 		return true
@@ -198,17 +197,17 @@ func appliedSamplingRules(rules []SamplingRule) []SamplingRule {
 		}{}
 		err := json.Unmarshal([]byte(rulesFromEnv), &jsonRules)
 		if err != nil {
-			log.Warn("error parsing DD_TRACE_SAMPLING_RULES: %v", err)
+			// log.Warn("error parsing DD_TRACE_SAMPLING_RULES: %v", err)
 			return nil
 		}
 		for _, v := range jsonRules {
 			if v.Rate == "" {
-				log.Warn("error parsing rule: rate not provided")
+				// log.Warn("error parsing rule: rate not provided")
 				continue
 			}
 			rate, err := v.Rate.Float64()
 			if err != nil {
-				log.Warn("error parsing rule: invalid rate: %v", err)
+				// log.Warn("error parsing rule: invalid rate: %v", err)
 				continue
 			}
 			switch {
@@ -224,7 +223,7 @@ func appliedSamplingRules(rules []SamplingRule) []SamplingRule {
 	validRules := make([]SamplingRule, 0, len(rules))
 	for _, v := range rules {
 		if !(v.Rate >= 0.0 && v.Rate <= 1.0) {
-			log.Warn("ignoring rule %+v: rate is out of range", v)
+			// log.Warn("ignoring rule %+v: rate is out of range", v)
 			continue
 		}
 		validRules = append(validRules, v)
@@ -242,13 +241,13 @@ func globalSampleRate() float64 {
 	}
 	r, err := strconv.ParseFloat(v, 64)
 	if err != nil {
-		log.Warn("ignoring DD_TRACE_SAMPLE_RATE: error: %v", err)
+		// log.Warn("ignoring DD_TRACE_SAMPLE_RATE: error: %v", err)
 		return defaultRate
 	}
 	if r >= 0.0 && r <= 1.0 {
 		return r
 	}
-	log.Warn("ignoring DD_TRACE_SAMPLE_RATE: out of range %f", r)
+	// log.Warn("ignoring DD_TRACE_SAMPLE_RATE: out of range %f", r)
 	return defaultRate
 }
 
@@ -263,9 +262,9 @@ func newRateLimiter() *rateLimiter {
 	if v != "" {
 		l, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			log.Warn("using default rate limit because DD_TRACE_RATE_LIMIT is invalid: %v", err)
+			// log.Warn("using default rate limit because DD_TRACE_RATE_LIMIT is invalid: %v", err)
 		} else if l < 0.0 {
-			log.Warn("using default rate limit because DD_TRACE_RATE_LIMIT is negative: %f", l)
+			// log.Warn("using default rate limit because DD_TRACE_RATE_LIMIT is negative: %f", l)
 		} else {
 			// override the default limit
 			limit = l

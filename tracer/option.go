@@ -15,11 +15,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pm-esd/tracing"
 	"github.com/pm-esd/tracing/ext"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
-	"gopkg.in/DataDog/dd-trace-go.v1/internal/globalconfig"
-	"gopkg.in/DataDog/dd-trace-go.v1/internal/log"
-	"gopkg.in/DataDog/dd-trace-go.v1/internal/version"
+	"github.com/pm-esd/tracing/globalconfig"
 )
 
 // config holds the tracer configuration.
@@ -59,7 +57,7 @@ type config struct {
 
 	// logger specifies the logger to use when printing errors. If not specified, the "log" package
 	// will be used.
-	logger ddtrace.Logger
+	logger tracing.Logger
 
 	// runtimeMetrics specifies whether collection of runtime metrics is enabled.
 	runtimeMetrics bool
@@ -102,7 +100,7 @@ func defaults(c *config) {
 		var err error
 		c.hostname, err = os.Hostname()
 		if err != nil {
-			log.Warn("unable to look up hostname: %v", err)
+			// log.Warn("unable to look up hostname: %v", err)
 		}
 	}
 	if v := os.Getenv("DD_ENV"); v != "" {
@@ -138,7 +136,7 @@ func defaults(c *config) {
 func statsTags(c *config) []string {
 	tags := []string{
 		"lang:go",
-		"version:" + version.Tag,
+		"version:v1",
 		"lang_version:" + runtime.Version(),
 	}
 	if c.serviceName != "" {
@@ -156,7 +154,7 @@ func statsTags(c *config) []string {
 }
 
 // WithLogger sets logger as the tracer's error printer.
-func WithLogger(logger ddtrace.Logger) StartOption {
+func WithLogger(logger tracing.Logger) StartOption {
 	return func(c *config) {
 		c.logger = logger
 	}
@@ -195,8 +193,8 @@ func WithServiceName(name string) StartOption {
 	return func(c *config) {
 		c.serviceName = name
 		if globalconfig.ServiceName() != "" {
-			log.Warn("ddtrace/tracer: deprecated config WithServiceName should not be used " +
-				"with `WithService` or `DD_SERVICE`; integration service name will not be set.")
+			// log.Warn("tracing/tracer: deprecated config WithServiceName should not be used " +
+			// "with `WithService` or `DD_SERVICE`; integration service name will not be set.")
 		}
 		globalconfig.SetServiceName("")
 	}
@@ -317,12 +315,12 @@ func WithServiceVersion(version string) StartOption {
 
 // StartSpanOption is a configuration option for StartSpan. It is aliased in order
 // to help godoc group all the functions returning it together. It is considered
-// more correct to refer to it as the type as the origin, ddtrace.StartSpanOption.
-type StartSpanOption = ddtrace.StartSpanOption
+// more correct to refer to it as the type as the origin, tracing.StartSpanOption.
+type StartSpanOption = tracing.StartSpanOption
 
 // Tag sets the given key/value pair as a tag on the started Span.
 func Tag(k string, v interface{}) StartSpanOption {
-	return func(cfg *ddtrace.StartSpanConfig) {
+	return func(cfg *tracing.StartSpanConfig) {
 		if cfg.Tags == nil {
 			cfg.Tags = map[string]interface{}{}
 		}
@@ -356,15 +354,15 @@ func Measured() StartSpanOption {
 // If there is no parent Span (eg from ChildOf), then the TraceID will also be set to the
 // value given here.
 func WithSpanID(id uint64) StartSpanOption {
-	return func(cfg *ddtrace.StartSpanConfig) {
+	return func(cfg *tracing.StartSpanConfig) {
 		cfg.SpanID = id
 	}
 }
 
 // ChildOf tells StartSpan to use the given span context as a parent for the
 // created span.
-func ChildOf(ctx ddtrace.SpanContext) StartSpanOption {
-	return func(cfg *ddtrace.StartSpanConfig) {
+func ChildOf(ctx tracing.SpanContext) StartSpanOption {
+	return func(cfg *tracing.StartSpanConfig) {
 		cfg.Parent = ctx
 	}
 }
@@ -372,7 +370,7 @@ func ChildOf(ctx ddtrace.SpanContext) StartSpanOption {
 // StartTime sets a custom time as the start time for the created span. By
 // default a span is started using the creation time.
 func StartTime(t time.Time) StartSpanOption {
-	return func(cfg *ddtrace.StartSpanConfig) {
+	return func(cfg *tracing.StartSpanConfig) {
 		cfg.StartTime = t
 	}
 }
@@ -382,20 +380,20 @@ func StartTime(t time.Time) StartSpanOption {
 // float64 between 0 and 1 where 0.5 would represent 50% of events.
 func AnalyticsRate(rate float64) StartSpanOption {
 	if math.IsNaN(rate) {
-		return func(cfg *ddtrace.StartSpanConfig) {}
+		return func(cfg *tracing.StartSpanConfig) {}
 	}
 	return Tag(ext.EventSampleRate, rate)
 }
 
 // FinishOption is a configuration option for FinishSpan. It is aliased in order
 // to help godoc group all the functions returning it together. It is considered
-// more correct to refer to it as the type as the origin, ddtrace.FinishOption.
-type FinishOption = ddtrace.FinishOption
+// more correct to refer to it as the type as the origin, tracing.FinishOption.
+type FinishOption = tracing.FinishOption
 
 // FinishTime sets the given time as the finishing time for the span. By default,
 // the current time is used.
 func FinishTime(t time.Time) FinishOption {
-	return func(cfg *ddtrace.FinishConfig) {
+	return func(cfg *tracing.FinishConfig) {
 		cfg.FinishTime = t
 	}
 }
@@ -404,7 +402,7 @@ func FinishTime(t time.Time) FinishOption {
 // err to set tags such as the error message, error type and stack trace. It has
 // no effect if the error is nil.
 func WithError(err error) FinishOption {
-	return func(cfg *ddtrace.FinishConfig) {
+	return func(cfg *tracing.FinishConfig) {
 		cfg.Error = err
 	}
 }
@@ -413,7 +411,7 @@ func WithError(err error) FinishOption {
 // from generating a stack trace. This is useful in situations where errors are frequent
 // and performance is critical.
 func NoDebugStack() FinishOption {
-	return func(cfg *ddtrace.FinishConfig) {
+	return func(cfg *tracing.FinishConfig) {
 		cfg.NoDebugStack = true
 	}
 }
@@ -423,7 +421,7 @@ func StackFrames(n, skip uint) FinishOption {
 	if n == 0 {
 		return NoDebugStack()
 	}
-	return func(cfg *ddtrace.FinishConfig) {
+	return func(cfg *tracing.FinishConfig) {
 		cfg.StackFrames = n
 		cfg.SkipStackFrames = skip
 	}

@@ -1,0 +1,46 @@
+package globalconfig
+
+import (
+	"math"
+	"sync"
+)
+
+var cfg = &config{
+	analyticsRate: math.NaN(),
+}
+
+type config struct {
+	mu            sync.RWMutex
+	analyticsRate float64
+	serviceName   string
+}
+
+// AnalyticsRate returns the sampling rate at which events should be marked. It uses
+// synchronizing mechanisms, meaning that for optimal performance it's best to read it
+// once and store it.
+func AnalyticsRate() float64 {
+	cfg.mu.RLock()
+	defer cfg.mu.RUnlock()
+	return cfg.analyticsRate
+}
+
+// SetAnalyticsRate sets the given event sampling rate globally.
+func SetAnalyticsRate(rate float64) {
+	cfg.mu.Lock()
+	cfg.analyticsRate = rate
+	cfg.mu.Unlock()
+}
+
+// ServiceName returns the default service name used by non-client integrations such as servers and frameworks.
+func ServiceName() string {
+	cfg.mu.RLock()
+	defer cfg.mu.RUnlock()
+	return cfg.serviceName
+}
+
+// SetServiceName sets the global service name set for this application.
+func SetServiceName(name string) {
+	cfg.mu.RLock()
+	defer cfg.mu.RUnlock()
+	cfg.serviceName = name
+}

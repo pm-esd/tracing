@@ -10,8 +10,6 @@ import (
 	"runtime/debug"
 	"sync/atomic"
 	"time"
-
-	"gopkg.in/DataDog/dd-trace-go.v1/internal/log"
 )
 
 // defaultMetricsReportInterval specifies the interval at which runtime metrics will
@@ -42,7 +40,7 @@ func (t *tracer) reportRuntimeMetrics(interval time.Duration) {
 	for {
 		select {
 		case <-tick.C:
-			log.Debug("Reporting runtime metrics...")
+			// log.Debug("Reporting runtime metrics...")
 			runtime.ReadMemStats(&ms)
 			debug.ReadGCStats(&gc)
 

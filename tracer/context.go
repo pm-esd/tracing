@@ -8,8 +8,8 @@ package tracer
 import (
 	"context"
 
+	"github.com/pm-esd/tracing"
 	"github.com/pm-esd/tracing/internal"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 )
 
 type contextKey struct{}
@@ -29,7 +29,7 @@ func SpanFromContext(ctx context.Context) (Span, bool) {
 		return &internal.NoopSpan{}, false
 	}
 	v := ctx.Value(activeSpanKey)
-	if s, ok := v.(ddtrace.Span); ok {
+	if s, ok := v.(tracing.Span); ok {
 		return s, true
 	}
 	return &internal.NoopSpan{}, false

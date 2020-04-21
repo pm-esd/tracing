@@ -12,8 +12,6 @@ import (
 	"math/rand"
 	"sync"
 	"time"
-
-	"gopkg.in/DataDog/dd-trace-go.v1/internal/log"
 )
 
 // random holds a thread-safe source of random numbers.
@@ -25,7 +23,7 @@ func init() {
 	if err == nil {
 		seed = n.Int64()
 	} else {
-		log.Warn("cannot generate random seed: %v; using current time", err)
+		// log.Warn("cannot generate random seed: %v; using current time", err)
 		seed = time.Now().UnixNano()
 	}
 	random = rand.New(&safeSource{

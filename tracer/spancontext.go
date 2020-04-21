@@ -9,12 +9,11 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/pm-esd/tracing"
 	"github.com/pm-esd/tracing/internal"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
-	"gopkg.in/DataDog/dd-trace-go.v1/internal/log"
 )
 
-var _ ddtrace.SpanContext = (*spanContext)(nil)
+var _ tracing.SpanContext = (*spanContext)(nil)
 
 // SpanContext represents a span state that can propagate to descendant spans
 // and across process boundaries. It contains all the information needed to
@@ -70,13 +69,13 @@ func newSpanContext(span *span, parent *spanContext) *spanContext {
 	return context
 }
 
-// SpanID implements ddtrace.SpanContext.
+// SpanID implements tracing.SpanContext.
 func (c *spanContext) SpanID() uint64 { return c.spanID }
 
-// TraceID implements ddtrace.SpanContext.
+// TraceID implements tracing.SpanContext.
 func (c *spanContext) TraceID() uint64 { return c.traceID }
 
-// ForeachBaggageItem implements ddtrace.SpanContext.
+// ForeachBaggageItem implements tracing.SpanContext.
 func (c *spanContext) ForeachBaggageItem(handler func(k, v string) bool) {
 	if atomic.LoadInt32(&c.hasBaggage) == 0 {
 		return
@@ -205,7 +204,7 @@ func (t *trace) push(sp *span) {
 		// capacity is reached, we will not be able to complete this trace.
 		t.full = true
 		t.spans = nil // GC
-		log.Error("trace buffer full (%d), dropping trace", traceMaxSize)
+		// log.Error("trace buffer full (%d), dropping trace", traceMaxSize)
 		if haveTracer {
 			atomic.AddInt64(&tr.tracesDropped, 1)
 		}

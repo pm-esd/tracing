@@ -17,8 +17,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"gopkg.in/DataDog/dd-trace-go.v1/internal/version"
 )
 
 var defaultClient = &http.Client{
@@ -90,7 +88,7 @@ func newHTTPTransport(addr string, client *http.Client) *httpTransport {
 		"Datadog-Meta-Lang":             "go",
 		"Datadog-Meta-Lang-Version":     strings.TrimPrefix(runtime.Version(), "go"),
 		"Datadog-Meta-Lang-Interpreter": runtime.Compiler + "-" + runtime.GOARCH + "-" + runtime.GOOS,
-		"Datadog-Meta-Tracer-Version":   version.Tag,
+		"Datadog-Meta-Tracer-Version":   "v1",
 		"Content-Type":                  "application/msgpack",
 	}
 	f, err := os.Open("/proc/self/cgroup")

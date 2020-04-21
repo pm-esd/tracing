@@ -11,15 +11,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pm-esd/tracing"
 	"github.com/pm-esd/tracing/ext"
 	"github.com/pm-esd/tracing/internal"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
-	"gopkg.in/DataDog/dd-trace-go.v1/internal/log"
-
-	"github.com/DataDog/datadog-go/statsd"
+	"github.com/pm-esd/tracing/statsd"
 )
 
-var _ ddtrace.Tracer = (*tracer)(nil)
+var _ tracing.Tracer = (*tracer)(nil)
 
 // tracer creates, buffers and submits Spans which are used to time blocks of
 // computation. They are accumulated and streamed into an internal payload,
@@ -99,13 +97,13 @@ func Start(opts ...StartOption) {
 // Stop stops the started tracer. Subsequent calls are valid but become no-op.
 func Stop() {
 	internal.SetGlobalTracer(&internal.NoopTracer{})
-	log.Flush()
+	// log.Flush()
 }
 
-// Span is an alias for ddtrace.Span. It is here to allow godoc to group methods returning
-// ddtrace.Span. It is recommended and is considered more correct to refer to this type as
-// ddtrace.Span instead.
-type Span = ddtrace.Span
+// Span is an alias for tracing.Span. It is here to allow godoc to group methods returning
+// tracing.Span. It is recommended and is considered more correct to refer to this type as
+// tracing.Span instead.
+type Span = tracing.Span
 
 // StartSpan starts a new span with the given operation name and set of options.
 // If the tracer is not started, calling this function is a no-op.
@@ -116,14 +114,14 @@ func StartSpan(operationName string, opts ...StartSpanOption) Span {
 // Extract extracts a SpanContext from the carrier. The carrier is expected
 // to implement TextMapReader, otherwise an error is returned.
 // If the tracer is not started, calling this function is a no-op.
-func Extract(carrier interface{}) (ddtrace.SpanContext, error) {
+func Extract(carrier interface{}) (tracing.SpanContext, error) {
 	return internal.GetGlobalTracer().Extract(carrier)
 }
 
 // Inject injects the given SpanContext into the carrier. The carrier is
 // expected to implement TextMapWriter, otherwise an error is returned.
 // If the tracer is not started, calling this function is a no-op.
-func Inject(ctx ddtrace.SpanContext, carrier interface{}) error {
+func Inject(ctx tracing.SpanContext, carrier interface{}) error {
 	return internal.GetGlobalTracer().Inject(ctx, carrier)
 }
 
@@ -143,15 +141,15 @@ func newUnstartedTracer(opts ...StartOption) *tracer {
 		c.propagator = NewPropagator(nil)
 	}
 	if c.logger != nil {
-		log.UseLogger(c.logger)
+		// log.UseLogger(c.logger)
 	}
 	if c.debug {
-		log.SetLevel(log.LevelDebug)
+		// log.SetLevel(log.LevelDebug)
 	}
 	if c.statsd == nil {
 		client, err := statsd.New(c.dogstatsdAddr, statsd.WithMaxMessagesPerPayload(40), statsd.WithTags(statsTags(c)))
 		if err != nil {
-			log.Warn("Runtime and health metrics disabled: %v", err)
+			// log.Warn("Runtime and health metrics disabled: %v", err)
 			c.statsd = &statsd.NoOpClient{}
 		} else {
 			c.statsd = client
@@ -174,7 +172,7 @@ func newTracer(opts ...StartOption) *tracer {
 	c := t.config
 	t.config.statsd.Incr("datadog.tracer.started", nil, 1)
 	if c.runtimeMetrics {
-		log.Debug("Runtime metrics enabled.")
+		// log.Debug("Runtime metrics enabled.")
 		t.wg.Add(1)
 		go func() {
 			defer t.wg.Done()
@@ -244,13 +242,13 @@ func (t *tracer) pushTrace(trace []*span) {
 	select {
 	case t.payloadChan <- trace:
 	default:
-		log.Error("payload queue full, dropping %d traces", len(trace))
+		// log.Error("payload queue full, dropping %d traces", len(trace))
 	}
 }
 
 // StartSpan creates, starts, and returns a new Span with the given `operationName`.
-func (t *tracer) StartSpan(operationName string, options ...ddtrace.StartSpanOption) ddtrace.Span {
-	var opts ddtrace.StartSpanConfig
+func (t *tracer) StartSpan(operationName string, options ...tracing.StartSpanOption) tracing.Span {
+	var opts tracing.StartSpanConfig
 	for _, fn := range options {
 		fn(&opts)
 	}
@@ -340,12 +338,12 @@ func (t *tracer) Stop() {
 }
 
 // Inject uses the configured or default TextMap Propagator.
-func (t *tracer) Inject(ctx ddtrace.SpanContext, carrier interface{}) error {
+func (t *tracer) Inject(ctx tracing.SpanContext, carrier interface{}) error {
 	return t.config.propagator.Inject(ctx, carrier)
 }
 
 // Extract uses the configured or default TextMap Propagator.
-func (t *tracer) Extract(carrier interface{}) (ddtrace.SpanContext, error) {
+func (t *tracer) Extract(carrier interface{}) (tracing.SpanContext, error) {
 	return t.config.propagator.Extract(carrier)
 }
 
@@ -363,11 +361,11 @@ func (t *tracer) flush() {
 			t.config.statsd.Timing("datadog.tracer.flush_duration", time.Since(start), nil, 1)
 		}(time.Now())
 		size, count := p.size(), p.itemCount()
-		log.Debug("Sending payload: size: %d traces: %d\n", size, count)
+		// log.Debug("Sending payload: size: %d traces: %d\n", size, count)
 		rc, err := t.config.transport.send(p)
 		if err != nil {
 			t.config.statsd.Count("datadog.tracer.traces_dropped", int64(count), []string{"reason:send_failed"}, 1)
-			log.Error("lost %d traces: %v", count, err)
+			// log.Error("lost %d traces: %v", count, err)
 		} else {
 			t.config.statsd.Count("datadog.tracer.flush_bytes", int64(size), nil, 1)
 			t.config.statsd.Count("datadog.tracer.flush_traces", int64(count), nil, 1)
@@ -384,7 +382,7 @@ func (t *tracer) flush() {
 func (t *tracer) pushPayload(trace []*span) {
 	if err := t.payload.push(trace); err != nil {
 		t.config.statsd.Incr("datadog.tracer.traces_dropped", []string{"reason:encoding_error"}, 1)
-		log.Error("error encoding msgpack: %v", err)
+		// log.Error("error encoding msgpack: %v", err)
 	}
 	if t.payload.size() > payloadSizeLimit {
 		t.config.statsd.Incr("datadog.tracer.flush_triggered", []string{"reason:size"}, 1)
